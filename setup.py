@@ -20,6 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'gap_finder_yankee = follow_the_gap_yankee.gap_finder_yankee:main',
+            'gap_controller_yankee = follow_the_gap_yankee.gap_controller_yankee:main',
         ],
     },
 )
