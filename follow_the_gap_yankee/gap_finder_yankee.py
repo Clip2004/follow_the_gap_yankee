@@ -3,18 +3,21 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Int32
+from geometry_msgs.msg import Twist
 import numpy as np
 class GapFinderYankee(Node): # Redefine node class
     def __init__(self):
         super().__init__("gap_finder_yankee_node") # Redefine node name
         # obj (msg_type,topic_name, callback_handler, buffer) 
         self.scan_sub = self.create_subscription(LaserScan,'/scan',self.scan_callback,10)
-        self.gap_pub = self.create_publisher(Int32, '/gap_index', 10)
+        self.cmd_pos_ctrl_pub = self.create_publisher(Twist, '/cmd_pos_ctrl', 10)
         self.timer = self.create_timer(0.1, self.timer_callback)
         self.r = 2 # Redefine range for gap detection
         self.gap_threshold = 5 # Redefine gap threshold
         self.n = 3 # Redefine number of consecutive hits found
         self.max_distance_index = 0 # Initialize max distance index
+        self.x = 0.0
+        self.angle = 0.0
     def get_Gaps(self, msg):
         n = 0 # Initialize counter
         indexes = []
@@ -60,15 +63,19 @@ class GapFinderYankee(Node): # Redefine node class
         if len(current_gap) > len(max_gap):
             max_gap = current_gap
         # self.get_logger().info(f"Max gap indices: {max_gap}")
-        max_distance_index = 0
         for i in max_gap:
             if msg.ranges[i] > msg.ranges[self.max_distance_index]:
                 self.max_distance_index = i
+        self.cmd_pos_ctrl(msg, self.max_distance_index)
+    def cmd_pos_ctrl(self, msg, max_distance_index):
+        self.x = msg.ranges[max_distance_index]
+        self.angle = msg.angle_min + (max_distance_index * msg.angle_increment)
 
     def timer_callback(self):
-        gap_msg = Int32()
-        gap_msg.data = self.max_distance_index
-        self.gap_pub.publish(gap_msg)
+        twist_msg = Twist()
+        twist_msg.linear.x = self.x
+        twist_msg.angular.z = self.angle
+        self.cmd_pos_ctrl_pub.publish(twist_msg)
 def main(args=None):
     rclpy.init(args=args)
     node = GapFinderYankee() # object definition (creation)
