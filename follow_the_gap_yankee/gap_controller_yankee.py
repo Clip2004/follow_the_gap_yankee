@@ -13,11 +13,13 @@ class GapControllerYankee(Node): # Redefine node class
         self.cmd_vel_ctrl_pub = self.create_publisher(Twist,'/cmd_vel_gap_ctrl',10)
         self.timer = self.create_timer(0.1, self.timer_callback)
         self.th = 0.0
+        self.x = 0.0
     def cmd_th_ctrl_callback(self, msg):
         self.th = msg.angular.z
+        self.x = msg.linear.x
     def timer_callback(self):
         twist = Twist()
-        twist.linear.x = 0.5
+        twist.linear.x = self.x
         twist.angular.z = self.th
         self.cmd_vel_ctrl_pub.publish(twist)
 def main(args=None):

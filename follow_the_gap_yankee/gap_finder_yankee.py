@@ -86,8 +86,18 @@ class GapFinderYankee(Node): # Redefine node class
 
     def timer_callback(self):
         twist_msg = Twist()
-        twist_msg.linear.x = self.x
-        twist_msg.angular.z = self.angle*1.35
+        
+        # Velocidad lineal constante o basada en distancia
+        if self.x > 2.0:
+            twist_msg.linear.x = 0.8  # Velocidad alta si hay mucho espacio
+        elif self.x > 1.0:
+            twist_msg.linear.x = 0.5  # Velocidad media
+        else:
+            twist_msg.linear.x = 0.2  # Velocidad baja si está cerca
+        
+        # Ángulo relativo para steering
+        twist_msg.angular.z = self.angle * 1.35  # Reducir factor de 1.35 a 1.0
+        
         self.cmd_pos_ctrl_pub.publish(twist_msg)
 def main(args=None):
     rclpy.init(args=args)
